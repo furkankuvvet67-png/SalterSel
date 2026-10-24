@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Şebeke Sel Maruziyeti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Şebeke Sel Maruziyeti</h1>
+      <p class="sub">Trafo merkezi ve HES gibi enerji varlıklarının, sel izine ya da modellenmiş sel-yatkın bölgeye uzaklığına göre maruziyet sınıfı. CLIMATHON MVP taslağı.</p>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <div class="note" id="demoNote" hidden></div>
+
+  <div class="lay">
+    <div class="lc">
+      <div class="mapbox" id="mapbox">
+        <canvas id="cv" aria-label="Varlıkların ve sel izinin haritası"></canvas>
+        <div class="maptools">
+          <button id="zin" title="Yakınlaştır" aria-label="Yakınlaştır">+</button>
+          <button id="zout" title="Uzaklaştır" aria-label="Uzaklaştır">−</button>
+          <button id="zfit" title="Tümünü sığdır" aria-label="Tümünü sığdır">⌂</button>
+        </div>
+        <div id="v3d" hidden>
+          <canvas id="cv3" aria-label="Üç boyutlu arazi ve enerji varlıkları"></canvas>
+          <div class="hud3" id="hud3"></div>
+          <div class="leg3"><span><i class="sw" style="background:#2a6bf2"></i>su (nehre göre ≤ seviye)</span><span><i class="sw" style="background:var(--kritik)"></i>sular altında</span><span><i class="sw" style="background:#f5f2e9;border:1px solid var(--line)"></i>etkilenmeyen</span><span><i class="sw" style="background:#8f9aa6"></i>baraj (sayılmaz)</span></div>
+          <button class="reset3" id="bReset3" title="Kamerayı sıfırla">Kamerayı sıfırla</button>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="attr" id="baseAttr" hidden></div>
+        <div class="drop">GeoJSON dosyasını bırak</div>
+      </div>
+
+      <div class="sub2">
+      <section class="card">
+              <h2>Varlıklar <button id="bCopy" style="float:right;margin-top:-6px" title="CSV olarak panoya kopyala">CSV kopyala</button></h2>
+              <div class="list" id="list"></div>
+            </section>
+
+      <section class="card" id="ewCard" hidden>
+              <h2>Yağış tahmini → erken uyarı (prototip)</h2>
+              <p class="small" style="margin:0 0 8px">Beklenen yağışı gir. Panel, yerel 45 yıllık yıllık-maksimum yağışa göre tekrar süresini bulur, uyarı seviyesine çevirir ve o seviyede izlenecek varlıkları listeler.</p>
+              <div class="ewin">
+                <label>24 saat (mm)<input id="ew1" type="number" min="0" max="800" step="1" inputmode="decimal"></label>
+                <label>72 saat (mm)<input id="ew3" type="number" min="0" max="1500" step="1" inputmode="decimal"></label>
+              </div>
+              <div class="actions" id="ewPre" style="margin-top:8px"></div>
+              <div id="ewOut" aria-live="polite"></div>
+              <div class="list" id="ewList"></div>
+              <details class="ewdet"><summary>Geriye dönük test ve sınırlar</summary><div id="ewBack"></div></details>
+            </section>
+
+      <section class="card ai" id="aiCard">
+              <h2>AI risk notu</h2>
+              <p class="small" style="margin:0 0 8px">Yapay zeka mesafeleri hesaplamaz. Yukarıdaki tabloyu okuyup operatör için öncelik ve belirsizlik notu yazar. Nottaki sayılar tabloyla karşılaştırılır.</p>
+              <div class="actions">
+                <button id="bAI" class="primary" disabled>Risk notu yaz</button>
+                <button id="bPrompt" title="AI Studio veya başka bir modelde kullanmak için">İstemi kopyala</button>
+              </div>
+              <p class="small" id="aiState"></p>
+              <div class="ainote" id="aiNote" aria-live="polite"></div>
+              <div class="aicheck" id="aiCheck"></div>
+            </section>
+      </div>
+    </div>
+
+    <aside>
+      <section class="card detail" id="detail"></section>
+
+      <section class="card">
+              <h2>Veri</h2>
+              <div class="loaders">
+                <label class="btn">Sel izi yükle<input type="file" id="fFlood" accept=".geojson,.json,application/geo+json,application/json"></label>
+                <label class="btn">Varlıkları yükle<input type="file" id="fAssets" accept=".geojson,.json,application/geo+json,application/json"></label>
+                <button class="cs" data-case="bozkurt">Bozkurt 2021</button>
+                <button class="cs" data-case="kumluca">Alakır 2025</button>
+                <button class="cs" data-case="trabzon">Trabzon 2024</button>
+                <button class="cs" data-case="rize" title="Bir sel olayı değil: bugünkü maruziyet taraması">Rize–Artvin (güncel)</button>
+                <button id="bDemo">Örnek veri</button>
+              </div>
+              <h2 style="margin-top:12px">Görünüm</h2>
+              <div class="loaders">
+                <button class="vw" data-view="2d" aria-pressed="true">2B harita</button>
+                <button class="vw" data-view="3d" aria-pressed="false">3B arazi</button>
+              </div>
+              <h2 style="margin-top:12px">Zemin haritası</h2>
+              <div class="loaders">
+                <button class="bm" data-base="sat">Uydu</button>
+                <button class="bm" data-base="hs">Yükselti</button>
+                <button class="bm" data-base="none">Yok</button>
+              </div>
+            </section>
+
+      <section class="card" id="simCard" hidden>
+              <h2>Nehir seviyesi senaryosu</h2>
+              <div class="field"><label for="lv">Nehre göre su seviyesi</label><output id="olv">kapalı</output><input type="range" id="lv" min="0" max="20" step="0.5" value="0"></div>
+              <div class="loaders" style="margin-bottom:8px">
+                <button class="pr" data-lv="2">+2 m</button><button class="pr" data-lv="5">+5 m</button><button class="pr" data-lv="10">+10 m</button><button class="pr" data-lv="0">Kapat</button>
+              </div>
+              <div class="field"><label for="ex">Dikey abartma</label><output id="oex">2×</output><input type="range" id="ex" min="1" max="4" step="0.5" value="2"></div>
+              <p class="summary" id="simSum"></p>
+              <div class="list" id="simList"></div>
+              <p class="small">Hidrolik simülasyon değildir: akış hızı, süre ve dalga yayılımı yok. Su, nehre göre yüksekliği seviyenin altında kalan her yere yayılır (küvet modeli). Düz ovada fazla, bağlantısız çukurlarda da su gösterebilir. Seviye bir yağış miktarına bağlanmamıştır. Barajlar zaten suyun içinde olduğu için sayılmaz. Su dokusu yaklaşık 140-260 m'lik ızgarada çizilir, varlık sonuçları 30 m hücrelerden gelir.</p>
+            </section>
+
+      <section class="card" id="layerCard">
+              <h2>Tehlike katmanı</h2>
+              <div class="loaders">
+                <button class="ly" data-layer="scar">Gözlenen sel izi</button>
+                <button class="ly" data-layer="zone">Sel-yatkın bölge (HAND)</button>
+                <button class="ly" data-layer="ai">AI tarama bölgesi</button>
+              </div>
+              <p class="small">Sayfa Bozkurt 2021 vakasıyla açılır. Gözlenen sel izi yalnızca Bozkurt için var; diğer vakalarda modellenmiş sel-yatkın bölge gösterilir. AI tarama bölgesi hasar görmeye müsait alanı çizer; öncelik sırası HAND kademesinden gelir (aşağıdaki karta bakın). Kendi dosyanı haritaya sürükleyebilirsin. Sel izi: GeoJSON poligonları. Varlıklar: GeoJSON veya Overpass JSON (nokta, poligon ve hat).</p>
+            </section>
+
+
+      <section class="card" id="aiValCard">
+              <h2>AI ve HAND: ne ölçüldü</h2>
+              <p class="small" style="margin:0 0 8px"><b>AI tarama bölgesi</b> hasar görmeye müsait alanı çizer: hangi altyapıya bakılacağını daraltır. <b>HAND kademesi</b> o altyapının öncelik sırasını verir. Bölge her vakada HAND ≤ 5 m bölgesinin %81'i büyüklüğündedir.</p>
+              <div class="ewdet" style="margin-top:0"><table>
+                <tr><th>Ölçüt (modelin görmediği olaylar)</th><th>HAND</th><th>AI</th></tr>
+                <tr><td>Aynı seli yakalamak için işaretlenen alan (155 bölge, 46 fırtına grubu)</td><td class="mono">1,00</td><td class="mono">0,81</td></tr>
+                <tr><td>Kent içi de etiketli İngiltere olaylarında (40)</td><td class="mono">1,00</td><td class="mono">0,55</td></tr>
+                <tr><td>Belgelenmiş 9 hasarlı tesisten bölgenin içinde kalan</td><td class="mono">8</td><td class="mono">8</td></tr>
+                <tr><td>Bağımsız 4 tesiste daha önde sıralayan</td><td class="mono">2</td><td class="mono">2</td></tr>
+                <tr><td>Aynı kademe içinde hasarlı tesisin sırası (9 tesis, medyan)</td><td>–</td><td class="mono">%49</td></tr>
+                <tr><td colspan="3"><b>2026 kör testi</b> (13 sel, 42 bölge; tahmin sel haritalarından önce kaydedildi)</td></tr>
+                <tr><td>Aynı seli daha küçük alanla yakaladığı olay</td><td>–</td><td class="mono">12/13</td></tr>
+                <tr><td>Aynı sel için işaretlenen alan (olay medyanı)</td><td class="mono">1,00</td><td class="mono">0,84</td></tr>
+                <tr><td>Sele değen 23 TM/santralden yakalanan</td><td class="mono">16</td><td class="mono">17</td></tr>
+                <tr><td>Bunun için işaretlenen TM/santral</td><td class="mono">590</td><td class="mono">436</td></tr>
+              </table></div>
+              <p class="small">Okuma: AI aynı seli daha küçük bir alanda yakalıyor ve HAND'ın içine aldığı hasarlı tesisleri dışarıda bırakmıyor. Ama tesisleri kendi aralarında sıralamada HAND'dan iyi değil; kademe içinde sıralaması yazı-tura düzeyinde. Bu yüzden öncelik HAND kademesiyle veriliyor. Rheinbach (küçük dere) iki bölgenin de dışında kaldı. 2026 kör testinde sonuç tekrarlandı: AI daha az tesis işaretleyip benzer sayıda sele değen tesisi yakaladı; yalnız trafo merkezlerinde HAND 8/10, AI 7/10.</p>
+              <details class="ewdet"><summary>Model ve sonraki adım</summary>
+                <p>Model: LightGBM, 17 arazi özelliği (üç akarsu ölçeğinde HAND ve nehre uzaklık, eğim, rölyef, TWI, arazi tipi, arazi örtüsü). Etiket: Copernicus EMS'nin 48 sel olayındaki 115 bölge ve Environment Agency kayıtlı taşkın sınırlarından 40 İngiltere olayı. Radar kentteki suyu göremediği için EMS'nin kent pikselleri eğitimde gözlenmemiş sayıldı. Nehre göre yükseldikçe risk artmayacak biçimde kısıtlandı. Kurallar ve bağımsız test tesisleri eğitimden önce kayda geçirildi.</p>
+                <p>Neden tesisi sıralayamıyor: model piksel düzeyinde sel çizimleriyle eğitildi. Bir tesisi su basmasında belirleyici olan set aşılması, köprü tıkanması ve tesis içi drenaj 30 m arazi modelinde görünmüyor.</p>
+                <p>Sonraki adım: aynı eğitim hattı (özellikler, olay dışarıda bırakma, bağımsız test) işletmecinin hasarlı ve hasarsız tesis kayıtlarıyla eğitilebilir. Etiket piksel değil tesis olunca model doğrudan hasarı öğrenmeye çalışır. Bunun daha isabetli olacağı bir hipotezdir; veriyle sınanması gerekir.</p>
+              </details>
+            </section>
+      <section class="card" id="chCard" hidden>
+              <h2>Köprü daralması</h2>
+              <p class="small" style="margin:0 0 8px">Bozkurt 2021'de taşmalar, rüsubat ve tomrukla tıkanan köprü kesitlerinde başladı. Bu katman, nehre göre ≤ 10 m olan ve akarsu üzerinde bir köprü ya da menfezin membasında (yukarı akış tarafında) kalan varlıkları işaretler.</p>
+              <div class="field"><label for="chL">Köprüye akış boyunca en fazla</label><output id="oChL"></output><input type="range" id="chL" min="250" max="3000" step="250" value="1000"></div>
+              <div class="loaders" style="margin-top:8px"><button id="bCh" aria-pressed="true">Haritada göster</button></div>
+              <p class="summary" id="chSum"></p>
+              <div class="list" id="chList"></div>
+              <p class="small">Köprü ve menfezler OpenStreetMap'in bugünkü (Ekim 2026) durumudur; 2021'deki köprüler farklı olabilir. Tıkanma olasılığı ve kabarma yüksekliği hesaplanmaz, yalnızca konum ilişkisi gösterilir. Varlık en yakın akarsuya (en fazla 250 m) bağlanır, nehir dereye tercih edilir. Hatlar ve barajlar değerlendirilmez. Analiz yalnızca nehre göre ≤ 10 m varlıkların çevresindeki alanda yapıldı.</p>
+            </section>
+
+      <section class="card" id="thrCard">
+              <h2>Eşikler</h2>
+              <div class="field"><label for="t1" id="lb1">Yüksek: sel izine en fazla</label><output id="o1"></output><input type="range" id="t1" min="50" max="1500" step="50" value="500"></div>
+              <div class="field"><label for="t2" id="lb2">Orta: sel izine en fazla</label><output id="o2"></output><input type="range" id="t2" min="250" max="5000" step="50" value="1500"></div>
+            </section>
+
+      <section class="card">
+              <h2>Özet</h2>
+              <div class="stack" id="stack"></div>
+              <div class="counts" id="counts"></div>
+              <p class="summary" id="summary"></p>
+              <p class="small" id="layerNote"></p>
+            </section>
+
+      <section class="card" id="rainCard" hidden>
+              <h2>Yağış</h2>
+              <p class="small" id="rainTxt" style="margin:0"></p>
+            </section>
+
+      <section class="card" id="factsCard">
+          <details><summary>Kaynaklar ve sınırlar</summary>
+          <div class="facts">
+            <div class="ok">
+              <h2>Bugün çalışan</h2>
+              <ul>
+                <li>Sentinel-2'den çıkarılan gözlenen sel izi (Bozkurt, Ağustos 2021, alt sınır)</li>
+                <li>Copernicus DEM'den modellenmiş sel-yatkın bölge (nehre göre yükseklik ≤ 5 m). Varlıklar ≤2, ≤5, ≤10 m kademesine göre sınıflanıyor. Alakır ve Trabzon bu katmanla gösteriliyor</li>
+                <li>8 olayla doğrulama, kurallar önceden sabit (Bozkurt, Ahr, Hawke's Bay, Arhavi, Lancaster, Valencia, Larji, Nepal): belgelenmiş 7 hasarlı enerji tesisinin 7'si ≤10 m, 6'sı ≤2 m kademesinde. Dar vadide ≤5 m bölge gözlenen selin %80-85'ini karanın %3-18'ini işaretleyerek yakalıyor</li>
+                <li>Arazi tipi etiketi (dar vadi, geniş vadi, ova): ovada ≤5 m bölge karanın %32-68'ini kapladığı için kademe orada tek başına sıralamaz, panel bunu belirtir</li>
+                <li>Hatlarda direk kuralı: kademe en alçak direğe göre (OSM power=tower/pole, 23 Ekim 2026). Bozkurt'ta %10 kuralının kaçırdığı Küre TM–İnebolu TM hattı artık ≤2 m'de</li>
+                <li>Kent içi etiketi: 500 m çevrenin en az %30'u yapı alanıysa (ESA WorldCover 2021) "kent içi"; bu varlıklarda bir kademe yukarı bakılmalı</li>
+                <li>Kıyı düzeltmesi: denize doğrudan akan hücreler artık analiz dışı kalmıyor, denize göre yükseklik alıyor ve bu varlıklar "deniz kaynaklı" diye ayrı etiketleniyor</li>
+                <li>CHIRPS günlük yağış (5 km) her vakada gösteriliyor</li>
+                <li>OSM trafo, HES, baraj ve iletim hatları için sel izine uzaklık ve sınıf</li>
+                <li>3B arazi görünümü ve nehir seviyesi senaryosu: seviye kaydırıcısıyla hangi varlıkların sular altında kalacağı</li>
+                <li>Köprü daralması: OSM'deki köprü ve menfezlerin membasında kalan, nehre göre ≤ 10 m varlıklar (Bozkurt raporundaki tıkanma mekanizmasına dayanır)</li>
+                <li>AI tarama bölgesi (yatkınlık modeli v2): 155 bölgede olay dışarıda bırakılarak test edildi, aynı seli HAND ≤ 5 m'den %19 daha az alanla yakalıyor. 2026'nın 13 selinde kör test: 12'sinde daha küçük alanla aynı sel. Varlık önceliğini değiştirmez</li>
+                <li>Rize–Artvin güncel tarama: bir sel olayı değil, Ekim 2026 OSM enerji varlıklarının bugünkü maruziyeti (HAND kademesi ve AI bölgesi). Direk, arazi tipi ve kent etiketleri bu vakada yok</li>
+                <li>Claude risk notu. Nottaki sayılar tabloyla karşılaştırılıyor</li>
+              </ul>
+            </div>
+            <div class="no">
+              <h2>Henüz çalışmayan</h2>
+              <ul>
+                <li>Dağıtım trafoları ve yerel hatlar (OSM'de yok)</li>
+                <li>Tesis düzeyinde hasar modeli. AI bölgesi alanı iyi buluyor, hasarlı tesisi sıralamıyor; işletmeci hasar kaydıyla eğitilmesi gerekir</li>
+                <li>Sentinel-1 radarıyla sel alanı (güvenilir alan çıkmadı)</li>
+                <li>Hidrolik sel simülasyonu (akış hızı, süre, dalga yayılımı). 3B senaryo yalnızca nehre göre yükseklikten türetilen küvet modelidir</li>
+                <li>Yağışa dayalı canlı tahmin. Geriye dönük testte kaba yağış ızgarası 7 olayın 4'ünü kaçırdı; istasyon/radar verisi olmadan kullanılmamalı</li>
+                <li>Ova ve alüvyon yelpazesi için ek ölçüt (nehre yatay uzaklık, set/bent). Kent içinde kademe kaydırma otomatik değil, yalnızca etiket (Lancaster merkezi ≤5 m'de %51, ≤10 m'de %91)</li>
+                <li>Bozkurt dışında gözlenen sel izi. Optik yöntem Ayancık, Alakır (kış, önceden çıplak nehir yatağı) ve Trabzon'da (bulut) güvenilir iz vermedi</li>
+                <li>Köprü tıkanma olasılığı ve kabarma yüksekliği. Köprü katmanı yalnızca konum ilişkisini gösterir; köprüler bugünkü OSM durumudur</li>
+                <li>Direk konumu bilinmiyor. Hatlar yer yüksekliğine göre değerlendiriliyor, tel yüksekliği hesaba girmiyor</li>
+                <li>Direk bazında hat kuralı OSM'deki direklerle sınırlı: direği olmayan hatlarda uzunluğun %10'u kuralı yedek. Direk yüksekliği 30 m hücreden, tel yüksekliği hesaba girmiyor. Arazi tipi (%20, %40) ve kent (%30) eşikleri sezgiseldir, kalibre değil</li>
+              </ul>
+            </div>
+            <div>
+              <h2>Sentetik olan</h2>
+              <ul>
+                <li>Yalnızca "Örnek veri" düğmesindeki uydurma vadi. Üç vakadaki varlıklar (OSM), Bozkurt sel izi ve yatkın bölgeler gerçek veriden hesaplanmıştır</li>
+                <li>Sonuçlar ön tarama içindir, saha doğrulamasının yerine geçmez</li>
+              </ul>
+            </div>
+          </div>
+          <p class="sources" style="margin-top:12px">Kaynaklar: varlıklar © OpenStreetMap katkıda bulunanlar, ODbL lisansı (veri 18 Ekim 2026'da Overpass ile alındı; köprü, menfez ve akarsular 22 Ekim 2026'da OSM API ile, direkler 23 Ekim 2026'da Overpass ile alındı). Kent içi etiketi: ESA WorldCover 10 m 2021 v200, © ESA WorldCover project / Contains modified Copernicus Sentinel data (2021). Köprü daralması mekanizması: Deniz, Şahin, Tezer ve Dabanlı, "Bozkurt Sel Afeti: Sebepler ve Tespitler", İTÜ, Ağustos 2021. Sel izi: Contains modified Copernicus Sentinel-2 data (2021), 6 ve 16 Ağustos 2021 görüntüleri, bitki örtüsü ve parlaklık değişiminden çıkarıldı. Zemin haritası: Contains modified Copernicus Sentinel-2 data (Bozkurt 30 Temmuz 2021, Kumluca Temmuz ve Eylül 2025, Trabzon 2022-2025 yaz sahneleri) ve DEM gölgelendirmesi. Sel-yatkın bölge: Copernicus DEM GLO-30 (Produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA), nehre göre yükseklik (HAND) hesabı. Günlük yağış: CHIRPS v2.0 (Funk ve ark. 2015, UCSB Climate Hazards Center), 0,05° çözünürlük. Yağış değeri (Mamatlar, 452,5 mm, 10-12 Ağustos 2021) Task 1 kaynaklarından.</p>
+          </details>
+        </section>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="data/bozkurt.js"></script>
+<script src="data/cases.js"></script>
+<script src="data/ptag.js"></script>
+<script src="data/choke.js"></script>
+<script src="data/base.js"></script>
+<script src="data/aiz.js"></script>
+<script src="data/d3.js"></script>
+<script src="js/config.local.js" onerror="void 0"></script>
+<script src="js/app.js"></script>
+<script src="js/app3d.js"></script>
+</body>
+</html>

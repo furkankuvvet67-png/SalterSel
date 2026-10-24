@@ -1,0 +1,13 @@
+web/js/config.local.js
+__pycache__/
+*.pyc
+.venv/
+*.npz
+ems/
+feat/
+grids/
+out/
+ea/
+blind/
+.DS_Store
+.vscode/settings.json
