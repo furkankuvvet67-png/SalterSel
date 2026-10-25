@@ -1,4 +1,6 @@
-# CLAUDE.md: Şebeke Sel Maruziyeti
+# CLAUDE.md: ŞebekeSel
+
+Platformun adı **ŞebekeSel** (bitişik, büyük Ş ve S). Arayüzde ve belgelerde bu adı kullan.
 
 Bu dosya Claude Code'un bu depoda çalışırken bilmesi gerekenleri anlatır. Kullanıcıyla Türkçe konuş.
 
@@ -11,7 +13,10 @@ Panelin ana fikri iki katmanlı:
 Model tesisleri kendi aralarında sıralamada HAND'dan iyi değil (ölçüldü). Bu yüzden öncelik her zaman HAND kademesinden gelir. Bu ilkeyi bozan bir arayüz değişikliği yapma.
 
 ## Klasörler
-- `web/`: statik panel, derleme yok. `index.html` (iskelet ve kartlar), `css/style.css`, `js/app.js` (2B harita, sınıflama, listeler, AI notu), `js/app3d.js` (Three.js 3B görünüm).
+- `web/`: statik sayfalar, derleme yok.
+  - `index.html` + `js/platform.js` + `css/platform.css`: **ana sayfa**, gerçek zamanlı platform (tam ekran Leaflet haritası, sol simge şeridi ve panel: Keşfet / Katmanlar / Değerlendir / Hakkında; harita üstünde araçlar, bilgi kartı, durum çubuğu).
+  - `vakalar.html` + `js/app.js` + `js/app3d.js` + `js/shell.js`: doğrulama vakaları (2B harita, sınıflama, listeler, AI notu, Three.js 3B görünüm). Platformla aynı kabuk (`body.platform.vk`); kartlar sol paneldeki sekmelerde (Vaka / Analiz / Görünüm / Doğrulama / Kaynaklar), `shell.js` sekmeleri yönetir. `app.js` öğeleri kimlik ve sınıfla bulur (`.cs`, `.ly`, `.bm`, `.vw`, `.pr`); taşırken bunları koru. Dosya yükleme ve sürükle-bırak kaldırıldı: vakalar sabittir.
+  - `css/style.css`: ortak renk değişkenleri ve bileşenler; iki sayfa da kullanır. `bolge.html` yalnızca `index.html`'e yönlendirir.
 - `web/data/*.js`: üretilmiş vaka verisi (her biri tek satırlık büyük JSON, toplam ~8 MB). **Elle düzenleme, açmaya çalışma, okumak için tamamını yükleme.** Gerekirse `grep -o` ile küçük parçalara bak. Bu dosyalar `pipeline/` betikleriyle üretilir.
 - `model/model_v2.txt`: LightGBM modeli. Değiştirme.
 - `pipeline/ai/`, `pipeline/dsi/`: Python betikleri. Yolları geliştirme sırasındaki çalışma klasörüne göredir (`ems/`, `feat/`, `grids/`, `out/`); bu klasörler depoda yok.
@@ -19,10 +24,20 @@ Model tesisleri kendi aralarında sıralamada HAND'dan iyi değil (ölçüldü).
 
 ## Çalıştırma ve test
 ```bash
-cd web && python3 -m http.server 8000     # http://localhost:8000
-python3 web/test_panel.py http://localhost:8000/index.html   # Playwright, 4 vaka × tüm katmanlar
+python3 pipeline/ondemand/serve.py        # web/ + değerlendirme servisi → http://localhost:8000
+python3 web/test_panel.py http://localhost:8000/vakalar.html     # Playwright, 4 vaka × tüm katmanlar
+python3 web/test_platform.py http://localhost:8000/index.html    # platform düzeni, masaüstü + telefon
+python3 web/test_ondemand.py http://localhost:8000/index.html    # uçtan uca değerlendirme (servis açıkken)
 ```
+Yalnızca statik sayfa için `cd web && python3 -m http.server 8000` da yeter; o zaman değerlendirme düğmeleri kapalı kalır.
 Test, her vaka ve katmanda özet metnini, listenin ilk satırlarını ve konsol hatalarını yazdırır. `config.local.js` bulunamadı (404) uyarısı beklenir, zararsızdır. Arayüz değişikliğinden sonra testi çalıştır ve sonuçların değişmediğini kontrol et.
+
+## Bölge envanteri ve istek anında değerlendirme
+- `web/index.html` + `js/platform.js`: 18 Karadeniz ilinin OSM enerji varlıkları (Leaflet). Veri `web/data/region.js` (`REGION`), `pipeline/osm/region_energy.py` ile üretilir. Durum nesnesi `S` (`sel` varlık, `pt` serbest nokta, `ev` sonuçlar, `hist` oturum geçmişi); panel `openTab(id)`.
+- Harita üstü öğeler Leaflet denetimlerinin (z-index 1000) üstünde olmalı; `platform.css`'te 1010+ kullanılır.
+- `pipeline/ondemand/serve.py`: `web/`'i sunar, `/api/eval` ve `/api/overlay` ile modeli istek anında çalıştırır (`evaluate.py`). Statik yayında (claude.ai) servis yoktur; sayfa bunu kartta söyler.
+- Kademe kuralı burada: varlık izinin en düşük HAND değeri (gösterilen değerle çelişmesin diye). Vaka panelindeki kural genelleştirilmiş poligona değmedir; ikisi Rize'de 30 tesisin 22'sinde aynı, 29'unda en fazla bir kademe farklı.
+- Nokta renkleri varlık türüdür (`--k-*`), risk değildir; risk renkleri yalnızca değerlendirme sonucunda (`--kritik` … `--dusuk`).
 
 ## app.js'te bilinmesi gerekenler
 - Durum nesnesi `S`; katman `S.layer` = `'scar'` (gözlenen sel izi, yalnızca Bozkurt), `'zone'` (HAND kademeleri), `'ai'` (AI tarama bölgesi).

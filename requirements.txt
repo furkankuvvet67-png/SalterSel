@@ -10,4 +10,5 @@ rasterio>=1.3
 pysheds>=0.4
 pystac-client>=0.7
 planetary-computer>=1.0
-playwright>=1.40  # yalnızca web/test_panel.py için
+certifi  # Windows'ta eski kök sertifika deposu için (pipeline/osm, pipeline/ondemand)
+playwright>=1.40  # yalnızca web/test_*.py için

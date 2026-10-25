@@ -1,0 +1,6 @@
+# Yalnızca web/ yayımlanır (vercel.json outputDirectory). Yerel ayar ve testler yayına girmez.
+web/js/config.local.js
+web/test_*.py
+pipeline/
+model/
+docs/

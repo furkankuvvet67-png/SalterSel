@@ -1,0 +1,199 @@
+/* ---------- gerçek zamanlı platform (index.html) ----------
+   Düzen: solda simge şeridi + açılır panel, sağda tam ekran harita; harita üstünde araçlar, bilgi kartı, durum çubuğu.
+   Renkler style.css'teki :root değişkenlerinden gelir (açık/koyu tema birlikte). */
+body.platform { padding: 0; margin: 0; height: 100vh; height: 100dvh; overflow: hidden; }
+.app { display: grid; grid-template-columns: 60px auto minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: 100vh; height: 100dvh; }
+.app > .rail { grid-column: 1; grid-row: 1; }
+.app > .side { grid-column: 2; grid-row: 1; }
+.app > .mapwrap { grid-column: 3; grid-row: 1; }
+
+/* simge şeridi */
+.rail { background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; z-index: 2; }
+.brand { width: 40px; height: 40px; display: grid; place-items: center; color: var(--water); margin-bottom: 8px; }
+.rail .tab { width: 52px; min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px 0;
+  font: 500 10.5px var(--font-body); color: var(--ink2); background: transparent; border: 0; border-radius: 6px; text-decoration: none; cursor: pointer; }
+.rail .tab svg, .icon svg, .search svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.rail .tab:hover { color: var(--ink); background: var(--bg); }
+.rail .tab[aria-pressed="true"] { color: var(--water); background: color-mix(in srgb, var(--water) 14%, transparent); }
+.rail a.tab { margin-top: auto; }
+.rail a.tab + .tab { margin-top: 0; }
+
+/* açılır panel */
+.side { width: 360px; background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; z-index: 1; }
+.side[hidden] { display: none !important; }
+.side-h { display: flex; flex-wrap: nowrap; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
+.side-h h1 { font-size: 16px; margin: 0; }
+.side-h p { margin: 2px 0 0; font-size: 12px; color: var(--ink2); }
+.pane { flex: 1; min-height: 0; overflow: auto; padding: 12px 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.pane[hidden] { display: none !important; }
+.pane h3 { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink2); }
+.pane h3:first-child { margin-top: 0; }
+.pane .small { margin: 0; }
+.ph { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 6px; }
+.ph h3 { margin: 0; }
+.pane .list { max-height: none; flex: 1 1 auto; min-height: 120px; margin: 0 -8px; }
+.pane .chips { margin: 2px 0; }
+.search { position: relative; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink2); pointer-events: none; }
+.search input { width: 100%; font: 14px var(--font-body); padding: 9px 10px 9px 36px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.search input:focus { outline: 2px solid var(--water); outline-offset: 0; border-color: transparent; }
+.selrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.selrow select[hidden] + select { grid-column: 1 / -1; }
+button.link { border: 0; background: none; padding: 0; color: var(--water); font: 500 12px var(--font-body); cursor: pointer; }
+.steps { margin: 0; padding-left: 20px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.facts-l { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--ink); display: flex; flex-direction: column; gap: 5px; }
+.pane .sources { font-size: 11.5px; }
+.pane a { color: var(--water); }
+
+/* düğmeler */
+.primary { background: var(--water); color: #fff; border-color: var(--water); }
+.primary:hover { filter: brightness(1.08); border-color: var(--water); }
+.primary:disabled, .icon:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+.primary[aria-pressed="true"] { box-shadow: inset 0 0 0 2px color-mix(in srgb, #fff 55%, transparent); }
+.wide { width: 100%; padding: 9px 12px; }
+.icon { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.icon.x { width: 30px; height: 30px; border-color: transparent; background: transparent; color: var(--ink2); }
+.icon.x:hover { color: var(--ink); background: var(--bg); }
+.icon[aria-pressed="true"] { background: var(--water); color: #fff; border-color: var(--water); }
+.bases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bases button { display: flex; flex-direction: column; gap: 5px; align-items: stretch; padding: 5px; font-size: 12px; text-align: center; }
+.bases button[aria-pressed="true"] { border-color: var(--water); box-shadow: 0 0 0 1px var(--water); color: var(--ink); background: var(--surface); }
+.bthumb { display: block; height: 44px; border-radius: 4px; }
+.b-map { background: linear-gradient(135deg, #f2efe9 0 40%, #aad3df 40% 52%, #f2efe9 52% 70%, #c8e6b0 70%); }
+.b-topo { background: repeating-radial-gradient(circle at 30% 70%, #e9e2c8 0 5px, #cdb98f 5px 6px), #e9e2c8; }
+.b-sat { background: linear-gradient(160deg, #2f4a2a 0 35%, #4d5d3a 35% 55%, #1f3b55 55% 70%, #6d6a52 70%); }
+
+/* harita */
+.mapwrap { position: relative; min-width: 0; min-height: 0; }
+#rmap { position: absolute; inset: 0; }
+#rmap.leaflet-container { background: var(--map); font-family: var(--font-body); }
+.mapwrap .leaflet-bottom { bottom: 24px; }
+/* Leaflet denetimleri z-index 1000 kullanır; harita üstü öğeler onun üstünde */
+.mtools { position: absolute; top: 12px; right: 12px; z-index: 1010; display: flex; flex-direction: column; gap: 6px; }
+.mtools .icon { box-shadow: 0 1px 4px rgba(0, 0, 0, .18); }
+.mtools .sep { height: 4px; }
+.infocard { position: absolute; top: 12px; right: 60px; z-index: 1020; width: 360px; max-height: calc(100% - 60px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .22); padding: 10px 14px 14px; }
+.infocard[hidden] { display: none !important; }
+.ic-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -6px 2px 0; }
+.ic-k { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink2); }
+.infocard .detail h2 { display: none; }
+.infocard .nm1 { margin: 0 0 8px; font-size: 16px; font-weight: 600; line-height: 1.3; }
+.infocard #bEval { margin-top: 12px; }
+.infocard #evState { margin: 6px 0 0; }
+.infocard #evState:empty { display: none; }
+.infocard #evOut:empty { display: none; }
+.infocard #evOut { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
+.infocard dl { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); }
+.res-tier { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.res-tier .pill { font-size: 14px; padding: 3px 10px; }
+.maplegend { position: absolute; left: 12px; bottom: 34px; z-index: 1010; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: calc(100% - 24px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 12px; }
+.maplegend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.maplegend[hidden] { display: none !important; }
+.status { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1010; height: 24px; display: flex; align-items: center; gap: 14px; padding: 0 10px;
+  font: 11px var(--font-mono); color: var(--ink2); background: color-mix(in srgb, var(--surface) 90%, transparent); border-top: 1px solid var(--line); }
+.status .grow { flex: 1; }
+.status i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--nodata); vertical-align: 1px; }
+.status i.on { background: var(--dusuk); }
+.status i.off { background: var(--kritik); }
+.rg.picking, .rg.picking .leaflet-interactive { cursor: crosshair !important; }
+
+/* ---------- değerlendirme raporu: bento ızgarası, çevrilebilir kartlar ---------- */
+.infocard.report { width: min(640px, calc(100% - 84px)); }
+.rep-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; margin-bottom: 8px; }
+.rep-h h3 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink2); }
+.rep-h .small { margin: 0; font-size: 11.5px; }
+.rep-f { margin-top: 10px !important; }
+/* sıra: kademe (2×2) | AI bölgesi, AI skoru (2×1) / HAND (2×1), pencere, model (1×1) / değerlendirilen, deniz (2×1) */
+.bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 140px; grid-auto-flow: row dense; gap: 8px; }
+.bc-tier { grid-column: span 2; grid-row: span 2; }
+.bc-ai, .bc-score, .bc-hand, .bc-what, .bc-terr { grid-column: span 2; }
+.bc-what:last-child, .bc-sea { grid-column: 1 / -1; }
+.bc { position: relative; padding: 0; border: 0; background: none; perspective: 900px; text-align: left; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.bc:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; border-radius: 8px; }
+.bc-in { position: absolute; inset: 0; transition: transform .5s cubic-bezier(.2, .7, .2, 1); transform-style: preserve-3d; }
+.bc[aria-pressed="true"] .bc-in { transform: rotateY(180deg); }
+.bc-f, .bc-b { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--line); backface-visibility: hidden; -webkit-backface-visibility: hidden; overflow: hidden; }
+.bc-f { background: var(--bg); }
+.bc:hover .bc-f { border-color: var(--water); }
+.bc-b { background: var(--surface); border-color: var(--water); transform: rotateY(180deg); overflow: auto; }
+.bc-l { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); line-height: 1.25; }
+.bc-t { font-size: 11.5px; line-height: 1.42; color: var(--ink); }
+.bc-big { flex: 1; display: flex; align-items: center; }
+.bc-big .pill { font-size: 30px; padding: 6px 16px; border-radius: 999px; font-family: var(--font-mono); font-weight: 500; }
+.bc-num { font: 500 30px var(--font-mono); line-height: 1.1; margin-top: auto; }
+.bc-num small { font-size: 15px; color: var(--ink2); }
+.bc-val { font: 500 17px var(--font-mono); line-height: 1.2; margin-top: auto; overflow-wrap: anywhere; }
+.bc-val.sm { font: 500 13px var(--font-body); }
+.bc-s { font-size: 11.5px; color: var(--ink2); line-height: 1.3; }
+.bc-hint { font-size: 10.5px; color: var(--water); margin-top: auto; opacity: .85; }
+.bc-num + .bc-hint, .bc-val + .bc-hint { margin-top: 2px; }
+.bc-tier .bc-hint { margin-top: 0; }
+.bc-tier .bc-t { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) {
+  .bc-in { transition: none; transform: none !important; }
+  .bc-b { transform: none; visibility: hidden; }
+  .bc[aria-pressed="true"] .bc-f { visibility: hidden; }
+  .bc[aria-pressed="true"] .bc-b { visibility: visible; }
+}
+@media (max-width: 640px) {
+  .infocard.report { width: auto; max-height: 72%; }
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 132px; }
+  .bc-tier { grid-row: span 2; }
+  .bc-win, .bc-model { grid-column: span 1; }
+}
+
+/* ---------- doğrulama vakaları (vakalar.html, body.vk) ----------
+   Aynı kabuk; harita app.js'in tuvali. Paneldeki kartlar düz bölümlere dönüşür. */
+.vk .rail a.brand { text-decoration: none; }
+.vk .pane { gap: 0; padding-top: 2px; }
+.vk .pane > .card { background: none; border: 0; border-radius: 0; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.vk .pane > .card:last-child { border-bottom: 0; }
+.vk .pane .card h2, .vk #detail h2 { margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink2); }
+.vk .pane .list { flex: none; max-height: 340px; min-height: 0; margin: 0 -6px; }
+.vk .pane .small { margin-top: 8px; }
+.vk .facts { grid-template-columns: minmax(0, 1fr); }
+.vk .facts ul { font-size: 12.5px; }
+.cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cases button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 8px 10px; }
+.cases button small { color: var(--ink2); font-weight: 400; font-size: 11.5px; line-height: 1.3; }
+.cases button[aria-pressed="true"] { border-color: var(--water); box-shadow: 0 0 0 1px var(--water); background: color-mix(in srgb, var(--water) 10%, var(--surface)); }
+.vk .mapbox { position: absolute; inset: 0; height: auto; border: 0; border-radius: 0; background: var(--map); }
+.vk .maptools { top: 12px; right: 12px; gap: 6px; }
+.vk .maptools .icon { width: 36px; height: 36px; box-shadow: 0 1px 4px rgba(0, 0, 0, .18); }
+.vk .legend { left: 12px; bottom: 12px; }
+.vk .reset3 { top: auto; bottom: 48px; right: 12px; }
+/* sol üst köşede app.js'in kuzey oku var; çipler onun sağından başlar */
+.mapchips { position: absolute; top: 12px; left: 64px; z-index: 6; max-width: calc(100% - 490px); }
+.mapchips .chip { background: color-mix(in srgb, var(--surface) 94%, transparent); box-shadow: 0 1px 4px rgba(0, 0, 0, .15); }
+.mapnote { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); z-index: 7; width: max-content; max-width: min(560px, calc(100% - 24px)); box-shadow: 0 2px 10px rgba(0, 0, 0, .2); }
+.vk .infocard { z-index: 8; }
+.vk #detail:has(> .empty) { display: none; }
+
+@media (max-width: 900px) {
+  .mapchips { max-width: calc(100% - 120px); }
+  .vk .infocard { top: auto; bottom: 12px; right: 12px; }
+  .vk .legend { bottom: 44px; }
+  .vk .attr { max-width: calc(100% - 16px); }
+}
+@media (max-width: 900px) {
+  .side { width: 320px; }
+  .infocard { width: 320px; }
+}
+/* telefon: şerit altta, panel ve kart alttan açılan sayfa */
+@media (max-width: 640px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+  .app > .mapwrap { grid-column: 1; grid-row: 1; }
+  .app > .rail { grid-column: 1; grid-row: 2; }
+  .rail { flex-direction: row; justify-content: space-around; padding: 2px 4px calc(2px + env(safe-area-inset-bottom, 0px)); border-right: 0; border-top: 1px solid var(--line); }
+  .brand { display: none; }
+  .rail .tab { width: auto; flex: 1; min-height: 50px; }
+  .rail a.tab { margin-top: 0; }
+  .side { position: fixed; left: 0; right: 0; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); width: auto; max-height: 62dvh; border-right: 0;
+    border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; box-shadow: 0 -6px 24px rgba(0, 0, 0, .25); z-index: 1100; }
+  .infocard { left: 8px; right: 8px; width: auto; top: auto; bottom: 32px; max-height: 58%; }
+  .mtools { top: 8px; right: 8px; }
+  .status #stZ { display: none; }
+}

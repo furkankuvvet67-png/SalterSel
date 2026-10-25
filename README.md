@@ -1,4 +1,4 @@
-# Şebeke Sel Maruziyeti (CLIMATHON)
+# ŞebekeSel (CLIMATHON)
 
 Enerji altyapısının (trafo merkezi, HES, hat) sele maruziyetini açık veriyle gösteren panel ve onu besleyen yatkınlık modeli. UP School × Siemens CLIMATHON projesi.
 
@@ -24,6 +24,19 @@ python3 -m http.server 8000      # sonra tarayıcıda http://localhost:8000
 | `docs/` | Analiz notları, ön kayıtlar, kör test tahminleri | – |
 
 `web/data/` dosyaları büyüktür (toplam ~8 MB) ve tek satırlık JSON içerir; VS Code'da açmanıza gerek yok.
+
+### Gerçek zamanlı platform (ana sayfa)
+`web/index.html`: Karadeniz Bölgesi'ndeki 18 ilin OSM enerji varlıkları (trafo merkezi, santral, baraj, hat) tam ekran bir Leaflet haritasında. Bir varlık ya da haritada herhangi bir nokta seçilip "Değerlendir"e basıldığında model o an çalışır; sonuç önceden hesaplanmaz. Önceden hazırlanmış olay vakaları ve doğrulama `web/vakalar.html` sayfasındadır (simge şeridinde "Vakalar").
+
+```bash
+pip install -r requirements.txt
+python pipeline/ondemand/serve.py          # web/ klasörünü de sunar → http://localhost:8000
+```
+Servis her istekte noktanın çevresindeki 20 × 20 km alanı (+3 km tampon) Copernicus DEM ve ESA WorldCover'dan indirir, `features_full.py` ile aynı 17 özelliği çıkarır, `model_v2` ile skorlar. Pencere 0,05° ızgaraya yaslanır; aynı varlık her istekte aynı sonucu alır. Yeni pencere 5-15 s, aynı pencere oturum içinde anında. Kademe varlık izindeki en düşük HAND'dan gelir; AI bölgesi pencerede HAND ≤ 5 m alanının 0,81'idir.
+
+Tutarlılık denetimi (önceden hesaplanmış Rize–Artvin vakasıyla, 30 tesis): kademe 22'sinde aynı, 29'unda en fazla bir kademe farklı; AI bölgesi 23'ünde aynı. `python pipeline/ondemand/check_case.py CASE_JSON AIZ_JSON OUT_CSV`. Fark 30 m ızgaranın konumundan gelir.
+
+Envanteri yenilemek: `python pipeline/osm/region_energy.py web/data/region.js` (Overpass, iki sorgu). Testler: `web/test_platform.py` (düzen, masaüstü + telefon), `web/test_ondemand.py` (servis açıkken uçtan uca), `web/test_panel.py` (vakalar.html).
 
 ### AI risk notu
 claude.ai'de yayımlanan sürümde not Claude ile yazılır. Yerelde iki seçenek var:

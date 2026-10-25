@@ -745,9 +745,6 @@ $('#t2').addEventListener('input', e => { S.t2 = +e.target.value; if (S.t1 > S.t
 function thr() { setThresholds(); reclass(); renderSummary(); renderList(); draw(); $('#aiNote').textContent = ''; $('#aiCheck').textContent = ''; $('#aiCheck').className = 'aicheck'; }
 
 $('#list').addEventListener('click', e => { const b = e.target.closest('.row'); if (b) select(+b.dataset.id); });
-$('#fFlood').addEventListener('change', e => { if (e.target.files[0]) ingest(e.target.files[0], 'flood'); e.target.value = ''; });
-$('#fAssets').addEventListener('change', e => { if (e.target.files[0]) ingest(e.target.files[0], 'assets'); e.target.value = ''; });
-$('#bDemo').onclick = loadDemo;
 document.querySelectorAll('.cs').forEach(b => b.onclick = () => loadCase(b.dataset.case, S.layer));
 document.querySelectorAll('.bm').forEach(b => b.onclick = () => { S.base = b.dataset.base; syncButtons(); draw(); if (S.view === '3d') t3tex(); });
 document.querySelectorAll('.ly').forEach(b => b.onclick = () => { if (S.caseId) loadCase(S.caseId, b.dataset.layer); });
@@ -758,10 +755,7 @@ $('#bCopy').onclick = async () => {
   try { await navigator.clipboard.writeText(text); flash('CSV panoya kopyalandı (' + rows.length + ' satır).'); }
   catch (e) { flash('Kopyalanamadı. Tarayıcı panoya erişimi engelledi.'); }
 };
-const mb = $('#mapbox');
-['dragenter', 'dragover'].forEach(t => mb.addEventListener(t, e => { e.preventDefault(); mb.classList.add('over'); }));
-['dragleave', 'drop'].forEach(t => mb.addEventListener(t, e => { e.preventDefault(); mb.classList.remove('over'); }));
-mb.addEventListener('drop', e => { for (const f of e.dataTransfer.files) ingest(f); });
+const mb = $('#mapbox');   // vakalar sabittir; dosya yükleme ve sürükle-bırak kaldırıldı
 
 new ResizeObserver(resize).observe(mb);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
@@ -870,6 +864,32 @@ $('#bPrompt').addEventListener('click', async () => {
       const j = await r.json();
       const text = ((j.candidates || [])[0]?.content?.parts || []).map(x => x.text || '').join('');
       if (opt && opt.onText) opt.onText({ text });
+      return { text };
+    };
+  }
+  // yerel model: config.local.js içinde ollamaModel varsa not Ollama ile yazılır (http://localhost:11434)
+  if (!sampleFn && cfg.ollamaModel) {
+    sampleFn = async (prompt, opt) => {
+      const r = await fetch((cfg.ollamaUrl || 'http://localhost:11434') + '/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: opt && opt.signal,
+        body: JSON.stringify({ model: cfg.ollamaModel, stream: true, messages: [{ role: 'user', content: prompt }] })
+      });
+      if (!r.ok) throw Object.assign(new Error('ollama ' + r.status), { code: 'error' });
+      const rd = r.body.getReader(), dec = new TextDecoder();
+      let text = '', buf = '';
+      for (;;) {
+        const { done, value } = await rd.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split('\n'); buf = lines.pop();
+        for (const ln of lines) {
+          if (!ln.trim()) continue;
+          const j = JSON.parse(ln);
+          if (j.error) throw Object.assign(new Error(j.error), { code: 'error' });
+          text += (j.message && j.message.content) || '';
+          if (opt && opt.onText) opt.onText({ text });
+        }
+      }
       return { text };
     };
   }

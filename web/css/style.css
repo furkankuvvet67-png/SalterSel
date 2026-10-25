@@ -18,6 +18,9 @@
   --nodata: #7b8a94;
   --note-bg: #fff4d6;
   --note-ink: #5a4300;
+  /* bolge.html varlık türü renkleri (risk sınıfı değildir) */
+  --k-tm: #6b4fbb; --k-hes: #1f6fb2; --k-res: #128a8a; --k-ges: #b8860b; --k-termik: #6f5b4b;
+  --k-diger: #7d7d8c; --k-gen: #7d7d8c; --k-baraj: #3d5566; --k-hat: #3a3f58; --k-dhat: #8a8fa6;
   --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -27,6 +30,8 @@
     --line: #2a3d49; --water: #5ba8e0; --water-fill: rgba(91,168,224,.30);
     --kritik: #ef6b62; --yuksek: #f0963f; --orta: #d9b73b; --dusuk: #55b88f; --nodata: #7b8a94;
     --note-bg: #3a2f10; --note-ink: #f1dc9c; color-scheme: dark;
+    --k-tm: #a98df0; --k-hes: #5ba8e0; --k-res: #3cc4c4; --k-ges: #e0b13c; --k-termik: #b59a84;
+    --k-diger: #a3a3b3; --k-gen: #a3a3b3; --k-baraj: #8fa9bb; --k-hat: #c9cde0; --k-dhat: #7d8296;
   }
 }
 :root[data-theme="dark"] {
@@ -34,6 +39,8 @@
   --line: #2a3d49; --water: #5ba8e0; --water-fill: rgba(91,168,224,.30);
   --kritik: #ef6b62; --yuksek: #f0963f; --orta: #d9b73b; --dusuk: #55b88f; --nodata: #7b8a94;
   --note-bg: #3a2f10; --note-ink: #f1dc9c; color-scheme: dark;
+  --k-tm: #a98df0; --k-hes: #5ba8e0; --k-res: #3cc4c4; --k-ges: #e0b13c; --k-termik: #b59a84;
+  --k-diger: #a3a3b3; --k-gen: #a3a3b3; --k-baraj: #8fa9bb; --k-hat: #c9cde0; --k-dhat: #7d8296;
 }
 * { box-sizing: border-box; }
 body {
@@ -149,3 +156,26 @@ aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .facts .ok h2 { color: var(--dusuk); }
 .facts .no h2 { color: var(--yuksek); }
 .sources { margin: 0; color: var(--ink2); font-size: 12px; max-width: 110ch; }
+
+/* ---------- bölge envanteri (bolge.html) ---------- */
+.note a { color: inherit; font-weight: 600; }
+.mapbox.rg { height: clamp(420px, 76vh, 820px); touch-action: auto; }
+.mapbox.rg.leaflet-container { background: var(--map); font-family: var(--font-body); }
+.rg.dim .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6); }
+.rg .leaflet-tooltip { font: 12px var(--font-body); background: var(--surface); color: var(--ink); border-color: var(--line); box-shadow: none; }
+.rg .leaflet-tooltip-top:before { border-top-color: var(--line); }
+.rg .leaflet-bar a { background: var(--surface); color: var(--ink); border-bottom-color: var(--line); }
+.rg .leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 82%, transparent); color: var(--ink2); font-size: 10.5px; }
+.rg .leaflet-control-attribution a { color: var(--ink2); }
+.rgf { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.rgf label { display: grid; grid-template-columns: auto 12px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 3px 0; cursor: pointer; }
+.rgf input { margin: 0; accent-color: var(--water); }
+.rgf .sw { width: 12px; }
+.rgf b { font-weight: 500; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.rgsel { width: 100%; font: 14px var(--font-body); padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); }
+.detail a { color: var(--water); }
+.rg.picking, .rg.picking .leaflet-interactive { cursor: crosshair !important; }
+.rgov { image-rendering: pixelated; }
+.evdl { grid-template-columns: minmax(0, 11ch) minmax(0, 1fr) !important; }
+.rgleg { position: static; margin-top: 8px; max-width: none; background: transparent; border: 0; padding: 0; }
+.ai .actions button:disabled { opacity: .55; cursor: not-allowed; }
