@@ -4,3 +4,7 @@ web/test_*.py
 pipeline/
 model/
 docs/
+deploy/
+Dockerfile
+.gcloudignore
+requirements-serve.txt

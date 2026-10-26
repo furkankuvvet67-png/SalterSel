@@ -1,0 +1,10 @@
+# Yalnızca değerlendirme servisi (pipeline/ondemand) için; Dockerfile bunu kurar. Sürümler yerelde çalışan kurulumdan.
+lightgbm==4.7.0
+numpy==2.4.6
+scipy==1.18.1
+rasterio==1.5.2
+pysheds==0.5
+numba==0.66.0
+pyproj==3.8.0
+pystac-client==0.9.1
+planetary-computer==1.0.0

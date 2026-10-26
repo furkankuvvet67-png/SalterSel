@@ -1,0 +1,11 @@
+# gcloud run deploy --source . yalnızca servisin derlenmesi için gerekenleri yükler (.dockerignore ile aynı)
+*
+!Dockerfile
+!.dockerignore
+!requirements-serve.txt
+!model/
+!model/model_v2.txt
+!pipeline/
+!pipeline/ondemand/
+!pipeline/ondemand/evaluate.py
+!pipeline/ondemand/serve.py

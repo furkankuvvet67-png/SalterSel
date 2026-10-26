@@ -1,0 +1,6 @@
+*
+!Dockerfile
+!requirements-serve.txt
+!model/model_v2.txt
+!pipeline/ondemand/evaluate.py
+!pipeline/ondemand/serve.py
